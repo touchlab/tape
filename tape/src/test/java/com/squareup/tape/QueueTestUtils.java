@@ -1,9 +1,8 @@
 // Copyright 2012 Square, Inc.
 package com.squareup.tape;
 
-import org.apache.commons.io.FileUtils;
-
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -19,9 +18,29 @@ public class QueueTestUtils {
   static File copyTestFile(String file) throws IOException {
     File newFile = File.createTempFile(file, "test");
     InputStream in = QueueTestUtils.class.getResourceAsStream(file);
-    FileUtils.copyInputStreamToFile(in, newFile);
+    copyInputStreamToFile(in, newFile);
     assertTrue(newFile.exists());
     return newFile;
+  }
+
+  private static void copyInputStreamToFile(InputStream in, File f) throws IOException
+  {
+    FileOutputStream fileOutputStream = new FileOutputStream(f);
+
+    try
+    {
+      byte[] buf = new byte[1024];
+
+      int read;
+      while((read = in.read(buf)) > 0)
+      {
+        fileOutputStream.write(buf, 0, read);
+      }
+    }
+    finally
+    {
+      fileOutputStream.close();
+    }
   }
 
   /** File that suppresses deletion. */

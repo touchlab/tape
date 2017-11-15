@@ -1,0 +1,31 @@
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+apply plugin: 'co.doppl.gradle'
+apply plugin: 'com.jfrog.bintray'
+
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+dependencies {
+    testCompile 'junit:junit:4.11'
+
+    testCompile 'org.mockito:mockito-core:1.9.5'
+    testCompile "co.doppl.lib:androidbasetest:$project.ext.javaCoreVersion"
+
+    testDoppl "co.doppl.lib:androidbasetest:$project.ext.dopplCoreVersion"
+}
+
+apply from: "$dopplSharedScriptHome/doppllibpublish.gradle"
+apply from: "$dopplSharedScriptHome/bintray.gradle"
+
+test{
+    enabled = false
+}
+
+dopplConfig {
+
+    copyMainOutput "../iostest/dopplframework/main"
+    copyTestOutput "../iostest/dopplframework/test"
+    copyDependencies true
+}

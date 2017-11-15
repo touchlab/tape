@@ -12,14 +12,13 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
-import org.fest.assertions.Assertions;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import static com.squareup.tape.QueueFile.HEADER_LENGTH;
-import static org.fest.assertions.Assertions.assertThat;
-import static org.fest.assertions.Fail.fail;
+import static org.junit.Assert.fail;
 
 /**
  * Tests for QueueFile.
@@ -63,10 +62,10 @@ public class QueueFileTest {
     QueueFile queue = new QueueFile(file);
     byte[] expected = values[253];
     queue.add(expected);
-    assertThat(queue.peek()).isEqualTo(expected);
+    Assert.assertArrayEquals(queue.peek(), expected);
     queue.close();
     queue = new QueueFile(file);
-    assertThat(queue.peek()).isEqualTo(expected);
+    Assert.assertArrayEquals(queue.peek(), expected);
   }
 
   @Test public void testClearErases() throws IOException {
@@ -78,14 +77,14 @@ public class QueueFileTest {
     byte[] data = new byte[expected.length];
     queue.raf.seek(HEADER_LENGTH + Element.HEADER_LENGTH);
     queue.raf.readFully(data, 0, expected.length);
-    assertThat(data).isEqualTo(expected);
+    Assert.assertArrayEquals(data, expected);
 
     queue.clear();
 
     // Should have been erased.
     queue.raf.seek(HEADER_LENGTH + Element.HEADER_LENGTH);
     queue.raf.readFully(data, 0, expected.length);
-    assertThat(data).isEqualTo(new byte[expected.length]);
+    Assert.assertArrayEquals(data, new byte[expected.length]);
   }
 
   @Test public void testClearDoesNotCorrupt() throws IOException {
@@ -95,11 +94,11 @@ public class QueueFileTest {
     queue.clear();
 
     queue = new QueueFile(file);
-    assertThat(queue.isEmpty()).isTrue();
-    assertThat(queue.peek()).isNull();
+    Assert.assertTrue(queue.isEmpty());
+    Assert.assertNull(queue.peek());
 
     queue.add(values[25]);
-    assertThat(queue.peek()).isEqualTo(values[25]);
+    Assert.assertArrayEquals(queue.peek(), values[25]);
   }
 
   @Test public void removeErasesEagerly() throws IOException {
@@ -115,17 +114,17 @@ public class QueueFileTest {
     byte[] data = new byte[firstStuff.length];
     queue.raf.seek(HEADER_LENGTH + Element.HEADER_LENGTH);
     queue.raf.readFully(data, 0, firstStuff.length);
-    assertThat(data).isEqualTo(firstStuff);
+    Assert.assertArrayEquals(data, firstStuff);
 
     queue.remove();
 
     // Next record is intact
-    assertThat(queue.peek()).isEqualTo(secondStuff);
+    Assert.assertArrayEquals(queue.peek(), secondStuff);
 
     // First should have been erased.
     queue.raf.seek(HEADER_LENGTH + Element.HEADER_LENGTH);
     queue.raf.readFully(data, 0, firstStuff.length);
-    assertThat(data).isEqualTo(new byte[firstStuff.length]);
+    Assert.assertArrayEquals(data, new byte[firstStuff.length]);
   }
 
   @Test public void testZeroSizeInHeaderComplains() throws IOException {
@@ -138,7 +137,7 @@ public class QueueFileTest {
       new QueueFile(file);
       fail("Should have complained about bad header length");
     } catch (IOException ex) {
-      assertThat(ex).hasMessage("File is corrupt; length stored in header is 0.");
+      Assert.assertTrue(ex.getMessage().contains("File is corrupt; length stored in header is 0."));
     }
   }
 
@@ -151,7 +150,7 @@ public class QueueFileTest {
     queue.remove();
 
     queue = new QueueFile(file);
-    assertThat(queue.peek()).isEqualTo(secondStuff);
+    Assert.assertArrayEquals(queue.peek(), secondStuff);
   }
 
   @Test public void removingBigDamnBlocksErasesEffectively() throws IOException {
@@ -170,17 +169,17 @@ public class QueueFileTest {
     byte[] data = new byte[bigBoy.length];
     queue.raf.seek(HEADER_LENGTH + Element.HEADER_LENGTH);
     queue.raf.readFully(data, 0, bigBoy.length);
-    assertThat(data).isEqualTo(bigBoy);
+    Assert.assertArrayEquals(data, bigBoy);
 
     queue.remove();
 
     // Next record is intact
-    assertThat(queue.peek()).isEqualTo(secondStuff);
+    Assert.assertArrayEquals(queue.peek(), secondStuff);
 
     // First should have been erased.
     queue.raf.seek(HEADER_LENGTH + Element.HEADER_LENGTH);
     queue.raf.readFully(data, 0, bigBoy.length);
-    assertThat(data).isEqualTo(new byte[bigBoy.length]);
+    Assert.assertArrayEquals(data, new byte[bigBoy.length]);
   }
 
   @Test public void testAddAndRemoveElements() throws IOException {
@@ -198,7 +197,7 @@ public class QueueFileTest {
       // Leave N elements in round N, 15 total for 5 rounds. Removing all the
       // elements would be like starting with an empty queue.
       for (int i = 0; i < N - round - 1; i++) {
-        assertThat(queue.peek()).isEqualTo(expected.remove());
+        Assert.assertArrayEquals(queue.peek(), expected.remove());
         queue.remove();
       }
       queue.close();
@@ -206,10 +205,10 @@ public class QueueFileTest {
 
     // Remove and validate remaining 15 elements.
     QueueFile queue = new QueueFile(file);
-    assertThat(queue.size()).isEqualTo(15);
-    assertThat(queue.size()).isEqualTo(expected.size());
+    Assert.assertEquals(queue.size(), 15);
+    Assert.assertEquals(queue.size(), expected.size());
     while (!expected.isEmpty()) {
-      assertThat(queue.peek()).isEqualTo(expected.remove());
+      Assert.assertArrayEquals(queue.peek(), expected.remove());
       queue.remove();
     }
     queue.close();
@@ -235,7 +234,7 @@ public class QueueFileTest {
 
     // Remove all but 1.
     for (int i = 1; i < max; i++) {
-      assertThat(queue.peek()).isEqualTo(expected.remove());
+      Assert.assertArrayEquals(queue.peek(), expected.remove());
       queue.remove();
     }
 
@@ -246,7 +245,7 @@ public class QueueFileTest {
     }
 
     while (!expected.isEmpty()) {
-      assertThat(queue.peek()).isEqualTo(expected.remove());
+      Assert.assertArrayEquals(queue.peek(), expected.remove());
       queue.remove();
     }
 
@@ -274,10 +273,10 @@ public class QueueFileTest {
     queueFile.close();
 
     queueFile = new QueueFile(file);
-    Assertions.assertThat(queueFile.size()).isEqualTo(2);
-    assertThat(queueFile.peek()).isEqualTo(values[253]);
+    Assert.assertEquals(queueFile.size(), 2);
+    Assert.assertArrayEquals(queueFile.peek(), values[253]);
     queueFile.remove();
-    assertThat(queueFile.peek()).isEqualTo(values[251]);
+    Assert.assertArrayEquals(queueFile.peek(), values[251]);
   }
 
   @Test public void testFailedRemoval() throws IOException {
@@ -296,12 +295,12 @@ public class QueueFileTest {
     queueFile.close();
 
     queueFile = new QueueFile(file);
-    assertThat(queueFile.size()).isEqualTo(1);
-    assertThat(queueFile.peek()).isEqualTo(values[253]);
+    Assert.assertEquals(queueFile.size(), 1);
+    Assert.assertArrayEquals(queueFile.peek(), values[253]);
 
     queueFile.add(values[99]);
     queueFile.remove();
-    assertThat(queueFile.peek()).isEqualTo(values[99]);
+    Assert.assertArrayEquals(queueFile.peek(), values[99]);
   }
 
   @Test public void testFailedExpansion() throws IOException {
@@ -322,13 +321,13 @@ public class QueueFileTest {
 
     queueFile = new QueueFile(file);
 
-    assertThat(queueFile.size()).isEqualTo(1);
-    assertThat(queueFile.peek()).isEqualTo(values[253]);
-    assertThat(queueFile.fileLength).isEqualTo(4096);
+    Assert.assertEquals(queueFile.size(), 1);
+    Assert.assertArrayEquals(queueFile.peek(), values[253]);
+    Assert.assertEquals(queueFile.fileLength, 4096);
 
     queueFile.add(values[99]);
     queueFile.remove();
-    assertThat(queueFile.peek()).isEqualTo(values[99]);
+    Assert.assertArrayEquals(queueFile.peek(), values[99]);
   }
 
   @Test public void testPeekWithElementReader() throws IOException {
@@ -344,10 +343,10 @@ public class QueueFileTest {
       @Override public void read(InputStream in, int length) throws IOException {
         peeks.incrementAndGet();
 
-        assertThat(length).isEqualTo(2);
+        Assert.assertEquals(length, 2);
         byte[] actual = new byte[length];
         in.read(actual);
-        assertThat(actual).isEqualTo(a);
+        Assert.assertArrayEquals(actual, a);
       }
     });
 
@@ -355,10 +354,10 @@ public class QueueFileTest {
       @Override public void read(InputStream in, int length) throws IOException {
         peeks.incrementAndGet();
 
-        assertThat(length).isEqualTo(2);
-        assertThat(in.read()).isEqualTo(1);
-        assertThat(in.read()).isEqualTo(2);
-        assertThat(in.read()).isEqualTo(-1);
+        Assert.assertEquals(length, 2);
+        Assert.assertEquals(in.read(), 1);
+        Assert.assertEquals(in.read(), 2);
+        Assert.assertEquals(in.read(), -1);
       }
     });
 
@@ -368,16 +367,16 @@ public class QueueFileTest {
       @Override public void read(InputStream in, int length) throws IOException {
         peeks.incrementAndGet();
 
-        assertThat(length).isEqualTo(3);
+        Assert.assertEquals(length, 3);
         byte[] actual = new byte[length];
         in.read(actual);
-        assertThat(actual).isEqualTo(b);
+        Assert.assertArrayEquals(actual, b);
       }
     });
 
-    assertThat(peeks.get()).isEqualTo(3);
-    assertThat(queueFile.peek()).isEqualTo(b);
-    assertThat(queueFile.size()).isEqualTo(1);
+    Assert.assertEquals(peeks.get(), 3);
+    Assert.assertArrayEquals(queueFile.peek(), b);
+    Assert.assertEquals(queueFile.size(), 1);
   }
 
   @Test public void testForEach() throws IOException {
@@ -392,15 +391,15 @@ public class QueueFileTest {
     QueueFile.ElementReader elementReader = new QueueFile.ElementReader() {
       @Override public void read(InputStream in, int length) throws IOException {
         if (iteration[0] == 0) {
-          assertThat(length).isEqualTo(2);
+          Assert.assertEquals(length, 2);
           byte[] actual = new byte[length];
           in.read(actual);
-          assertThat(actual).isEqualTo(a);
+          Assert.assertArrayEquals(actual, a);
         } else if (iteration[0] == 1) {
-          assertThat(length).isEqualTo(3);
+          Assert.assertEquals(length, 3);
           byte[] actual = new byte[length];
           in.read(actual);
-          assertThat(actual).isEqualTo(b);
+          Assert.assertArrayEquals(actual, b);
         } else {
           fail();
         }
@@ -410,8 +409,8 @@ public class QueueFileTest {
 
     queueFile.forEach(elementReader);
 
-    assertThat(queueFile.peek()).isEqualTo(a);
-    assertThat(iteration[0]).isEqualTo(2);
+    Assert.assertArrayEquals(queueFile.peek(), a);
+    Assert.assertEquals(iteration[0], 2);
   }
 
   @Test public void testForEachReadWithOffset() throws IOException {
@@ -432,7 +431,7 @@ public class QueueFileTest {
 
       queueFile.forEach(elementReader);
 
-      assertThat(actual).isEqualTo(new byte[] {1, 2, 3, 4, 5});
+      Assert.assertArrayEquals(actual, new byte[] {1, 2, 3, 4, 5});
     }
 
   @Test public void testForEachStreamCopy() throws IOException {
@@ -465,7 +464,7 @@ public class QueueFileTest {
     };
 
     queueFile.forEach(elementReader);
-    assertThat(baos.toByteArray()).isEqualTo(new byte[] {1, 2, 3, 4, 5});
+    Assert.assertArrayEquals(baos.toByteArray(), new byte[] {1, 2, 3, 4, 5});
   }
 
   /**
@@ -508,8 +507,7 @@ public class QueueFileTest {
       queue.remove();
 
       for (int i = 0; i < value.length; i++) {
-        assertThat(value[i]).isEqualTo((byte) (blockNum + 1))
-            .as("Block " + (blockNum + 1) + " corrupted at byte index " + i);
+        Assert.assertEquals("Block " + (blockNum + 1) + " corrupted at byte index " + i, value[i], (byte) (blockNum + 1));
       }
     }
 
@@ -575,8 +573,7 @@ public class QueueFileTest {
       queue.remove();
 
       for (int i = 0; i < value.length; i++) {
-        assertThat(value[i]).isEqualTo(expectedBlockNumber)
-            .as("Block " + expectedBlockNumber + " corrupted at byte index " + i);
+        Assert.assertEquals("Block " + expectedBlockNumber + " corrupted at byte index " + i, value[i], expectedBlockNumber);
       }
     }
 
@@ -622,7 +619,8 @@ public class QueueFileTest {
     byte[] data = new byte[firstElementPadding];
     queue.raf.seek(HEADER_LENGTH);
     queue.raf.readFully(data, 0, firstElementPadding);
-    assertThat(data).containsOnly((byte) 0x00);
+    Assert.assertEquals(data[0], (byte) 0x00);
+//    assertThat(data).containsOnly((byte) 0x00);
 
     // Read from the last element to the end and make sure it's zeroed.
     int endOfLastElement = HEADER_LENGTH + firstElementPadding + 4 * (Element.HEADER_LENGTH + 1024);
@@ -630,7 +628,8 @@ public class QueueFileTest {
     data = new byte[readLength];
     queue.raf.seek(endOfLastElement);
     queue.raf.readFully(data, 0, readLength);
-    assertThat(data).containsOnly((byte) 0x00);
+    Assert.assertEquals(data[0], (byte) 0x00);
+//    assertThat(data).containsOnly((byte) 0x00);
   }
 
   /**
@@ -670,7 +669,7 @@ public class QueueFileTest {
 
     // Make sure values are not corrupted
     for (int i = 1; i < 6; i++) {
-      assertThat(queue.peek()).isEqualTo(values[i]);
+      Assert.assertArrayEquals(queue.peek(), values[i]);
       queue.remove();
     }
 
@@ -700,7 +699,7 @@ public class QueueFileTest {
 
     // File should not be corrupted.
     QueueFile queueFile2 = new QueueFile(file);
-    assertThat(queueFile2.size()).isEqualTo(queueSize);
+    Assert.assertEquals(queueFile2.size(), queueSize);
   }
 
   /**
